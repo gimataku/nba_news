@@ -73,13 +73,22 @@ def save_fetch_log(log: dict) -> None:
         session.commit()
 
 
-def get_latest_fetch_log() -> FetchLog | None:
+def get_latest_fetch_log() -> dict | None:
     with SessionLocal() as session:
-        return (
+        row = (
             session.query(FetchLog)
             .order_by(desc(FetchLog.executed_at))
             .first()
         )
+        if row is None:
+            return None
+        return {
+            "executed_at":   row.executed_at,
+            "source_used":   row.source_used,
+            "is_fallback":   bool(row.is_fallback),
+            "fetched_count": row.fetched_count,
+            "error_message": row.error_message,
+        }
 
 
 # --- helper ---
