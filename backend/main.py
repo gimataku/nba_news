@@ -4,6 +4,7 @@ import os
 import uvicorn
 from fastapi import FastAPI
 
+from api.routes import router as api_router
 from db.models import init_db
 from scheduler import check_and_run_batch, scheduler
 
@@ -22,6 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="NBA News JP")
+app.include_router(api_router, prefix="/api")
 
 
 @app.on_event("startup")
