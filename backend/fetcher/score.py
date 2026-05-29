@@ -15,7 +15,9 @@ def fetch_score(pub_date: datetime) -> dict | None:
     Returns:
         スコアデータ(dict) または None（試合なし・エラー）
     """
-    if pub_date.hour < 12:
+    # NBAの試合は現地時間の夜（UTC 18時以降）に開催されるため、
+    # UTC 18時未満の記事は前日の試合を参照する
+    if pub_date.hour < 18:
         target_date = (pub_date - timedelta(days=1)).strftime("%Y-%m-%d")
     else:
         target_date = pub_date.strftime("%Y-%m-%d")
