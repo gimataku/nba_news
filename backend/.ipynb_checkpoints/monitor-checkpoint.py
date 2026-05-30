@@ -1,4 +1,3 @@
-import io
 import os
 import re
 import sys
@@ -71,19 +70,19 @@ def check_batch_status() -> None:
     now_utc = _now_utc()
 
     if not last_fetched_at:
-        print("  最終取得: 未取得 [!!]")
+        print("  最終取得: 未取得 ⚠️")
     else:
         dt = _parse_iso(last_fetched_at)
         if dt is None:
-            print(f"  最終取得: パース失敗 ({last_fetched_at}) [!!]")
+            print(f"  最終取得: パース失敗 ({last_fetched_at}) ⚠️")
         else:
             elapsed_hours = (now_utc - dt).total_seconds() / 3600
             elapsed_str = _format_elapsed(elapsed_hours)
             jst_str = _fmt_jst(dt)
             if elapsed_hours <= 8:
-                print(f"  最終取得: {jst_str} ({elapsed_str}) [OK]")
+                print(f"  最終取得: {jst_str} ({elapsed_str}) ✅")
             else:
-                print(f"  最終取得: {jst_str} ({elapsed_str}) [!!] 警告")
+                print(f"  最終取得: {jst_str} ({elapsed_str}) ⚠️ 警告")
 
     log = get_latest_fetch_log()
     if log is None:
@@ -91,15 +90,15 @@ def check_batch_status() -> None:
     else:
         source = log["source_used"] or "不明"
         if log["is_fallback"]:
-            print(f"  使用ソース: {source}（フェールオーバーあり）[!!]")
+            print(f"  使用ソース: {source}（フェールオーバーあり）⚠️")
         else:
-            print(f"  使用ソース: {source}（フェールオーバーなし）[OK]")
+            print(f"  使用ソース: {source}（フェールオーバーなし）✅")
 
     api_limit = get_setting("api_limit_exceeded")
     if api_limit == "true":
-        print("  API上限超過: あり [!!]")
+        print("  API上限超過: あり ⚠️")
     else:
-        print("  API上限超過: なし [OK]")
+        print("  API上限超過: なし ✅")
 
     print()
 
@@ -182,9 +181,9 @@ def check_error_logs() -> None:
 
     print(f"  WARNING: {warning_count}件")
     if error_count == 0:
-        print("  ERROR: 0件 [OK]")
+        print("  ERROR: 0件 ✅")
     else:
-        print(f"  ERROR: {error_count}件 [!!]")
+        print(f"  ERROR: {error_count}件 ⚠️")
         for err_line in error_lines:
             print(f"    {err_line}")
 
@@ -213,19 +212,14 @@ def check_monthly_cost() -> None:
     print(f"  取得記事数: {total_count}件")
     cost_str = f"${total_cost:.2f} / ${MONTHLY_COST_LIMIT:.2f}（{usage_pct:.1f}%）"
     if usage_pct >= 80:
-        print(f"  推定コスト: {cost_str} [!!] 警告")
+        print(f"  推定コスト: {cost_str} ⚠️ 警告")
     else:
-        print(f"  推定コスト: {cost_str} [OK]")
+        print(f"  推定コスト: {cost_str} ✅")
 
     print()
 
 
 def main() -> None:
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer,
-        encoding="utf-8",
-        errors="replace",
-    )
     now_jst = _now_jst()
     print("====================================")
     print("NBA News JP - 監視レポート")
