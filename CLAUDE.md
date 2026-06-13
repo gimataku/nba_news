@@ -10,40 +10,43 @@ NBAニュース翻訳アプリ（個人利用・ローカルサーバー）
 - 外部API：Claude API（claude-haiku-4-5-20251001）/ BALLDONTLIE API / RSS
 
 ## ディレクトリ構成
-nba-news-jp/
-├── backend/
-│   ├── main.py
-│   ├── scheduler.py
-│   ├── config.py
-│   ├── fetcher/
-│   │   ├── rss.py
-│   │   └── score.py
-│   ├── processor/
-│   │   ├── claude_client.py
-│   │   └── filter.py
-│   ├── db/
-│   │   ├── models.py
-│   │   ├── crud.py
-│   │   └── migrations/
-│   └── api/
-│       └── routes.py
-├── frontend/
-│   └── src/
-│       ├── App.jsx
-│       ├── components/
-│       └── hooks/
-├── logs/
-├── docs/                  # ドキュメント類
-│   └── Basic_Design/      # 基本設計書
-│   └── Detail_Design/     # 詳細設計書
-│   └── Project_Plan/      # プロジェクト計画書
-│   └── Requirement/       # 要件定義書
-│   └── Risk_Report/       # リスク調査書
-│   └── Test_Design/       # テスト設計書
-│   └── Trial/             # トライアル運用関連
-├── .env
+'''
+NBA_news/
+├── app
+│   ├── backend/
+│   │   ├── main.py            # FastAPI エントリーポイント
+│   │   ├──scheduler.py       # バッチ処理・APScheduler 設定
+│   │   ├──config.py          # 環境変数・定数
+│   │   ├──fetcher/
+│   │   │   ├── rss.py         # RSS取得
+│   │   │   └── score.py       # BALLDONTLIE スコア取得
+│   │   ├── processor/
+│   │   │   ├── claude_client.py  # Claude API 翻訳・分類
+│   │   │   └── filter.py         # Spurs 関連フィルタ
+│   │   ├── db/
+│   │   │   ├── models.py      # テーブル定義・DB初期化
+│   │   │   └── crud.py        # CRUD 操作
+│   │   ├── api/
+│   │   |   ├── routes.py      # FastAPI ルーティング
+│   ├── frontend/
+│   │   └── src/
+│   │       ├── App.jsx
+│   │       └── components/    # FilterBar / CategoryTabs / NewsCard 等
+│   ├── logs/
+│   │   └── nba_news.log
+│   ├── docs/                  # ドキュメント類
+│   │   └── Basic_Design/      # 基本設計書
+│   │   └── Detail_Design/     # 詳細設計書
+│   │   └── Project_Plan/      # プロジェクト計画書
+│   │   └── Requirement/       # 要件定義書
+│   │   └── Risk_Report/       # リスク調査書
+│   │   └── Test_Design/       # テスト設計書
+│   │   └── Trial/             # トライアル運用関連
 ├── .env.example
+├── setup.md               # 環境構築手順
+├── README.md
 └── CLAUDE.md
+'''
 
 ## 設計書（必ず参照すること）
 - 詳細設計書：docs/detail_design_v0.3.md
