@@ -33,7 +33,14 @@ nba-news-jp/
 │       ├── components/
 │       └── hooks/
 ├── logs/
-├── docs/             ← 設計書を置く
+├── docs/                  # ドキュメント類
+│   └── Basic_Design/      # 基本設計書
+│   └── Detail_Design/     # 詳細設計書
+│   └── Project_Plan/      # プロジェクト計画書
+│   └── Requirement/       # 要件定義書
+│   └── Risk_Report/       # リスク調査書
+│   └── Test_Design/       # テスト設計書
+│   └── Trial/             # トライアル運用関連
 ├── .env
 ├── .env.example
 └── CLAUDE.md
