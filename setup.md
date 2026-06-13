@@ -11,7 +11,7 @@
 
 ```bash
 git clone <リポジトリURL>
-cd NBA_news
+cd NBA_news/app
 ```
 
 ## 3. .env ファイルの準備
