@@ -10,7 +10,7 @@
   - 基本設計書 フェーズ2 v0.5（`basic_design_p2_v0.5.md`）
   - 詳細設計書 フェーズ2 v0.4（`detail_design_p2_v0.4.md`）
   - テスト設計書 フェーズ2 v0.2（`test_design_p2_v0.2.md`）
-  - リスク評価書 フェーズ1 v1.2（`risk_report_final_v1.2.md`）
+  - リスク評価書 フェーズ1 v1.2（`risk_report_final_v1.3.md`）
 
 ---
 
