@@ -59,7 +59,7 @@
 └────────────────────────┬────────────────────────────────────────┘
                           │ HTTPS
 ┌────────────────────────▼────────────────────────────────────────┐
-│                  Render（Starterプラン・$7/月）                   │
+│                  Render（Starterインスタンス・$7/月）                   │
 │           + Persistent Disk（1GB・$0.25/月）                     │
 │                  バックエンド（Python / FastAPI）                  │
 │                                                                   │
@@ -107,16 +107,16 @@
 
 | 項目 | フェーズ1 | フェーズ2 |
 |---|---|---|
-| ホスト | localhost:8000 | **Render Starterプラン（$7/月）** |
+| ホスト | localhost:8000 | **Render Starterインスタンス（$7/月）** |
 | アクセス方法 | ローカルブラウザのみ | **HTTPS・外部公開** |
 | FastAPI起動 | `host="127.0.0.1"` | **`host="0.0.0.0"`** |
 | SSL | なし | **Render自動プロビジョニング** |
-| スリープ | — | **なし（Starterプラン）** |
+| スリープ | — | **なし（Starterインスタンス）** |
 | **DB永続化** | ローカルファイル（問題なし） | **Render Persistent Disk（$0.25/GB/月・1GB）を追加** |
 | **SQLiteマウントパス** | — | **`/data/nba_news.db`（Persistent Diskにマウント）** |
 | **デプロイ方式** | — | **GitHubリポジトリ連携（push → 自動デプロイ）** |
 
-> **設計根拠（RED-01対応）：** RenderのStarter planはエフェメラルファイルシステムを採用しており、デプロイ・サービス再起動のたびにコンテナがリセットされる。SQLiteファイルが揮発するとarticles・users・app_settingsのデータがすべて失われる。対処として**案A（Render Persistent Disk）を採用**し、`/data/nba_news.db` をPersistent Diskにマウントすることでデプロイ後もデータを保持する。
+> **設計根拠（RED-01対応）：** RenderのStarterインスタンスはエフェメラルファイルシステムを採用しており、デプロイ・サービス再起動のたびにコンテナがリセットされる。SQLiteファイルが揮発するとarticles・users・app_settingsのデータがすべて失われる。対処として**案A（Render Persistent Disk）を採用**し、`/data/nba_news.db` をPersistent Diskにマウントすることでデプロイ後もデータを保持する。
 >
 > **デプロイ方式確定（D-05）：** GitHubリポジトリをRenderサービスに連携し、mainブランチへのpushで自動デプロイを行う。詳細手順（ブランチ戦略・環境変数設定手順）は詳細設計書で確定する。
 
