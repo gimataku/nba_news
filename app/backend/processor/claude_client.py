@@ -24,24 +24,21 @@ USER_PROMPT_TEMPLATE = """以下のNBAニュース記事を処理してくださ
 以下のJSON形式で回答してください：
 {{
   "title_ja": "日本語に翻訳した見出し（原文のニュアンスを保持）",
-  "summary_ja": "300〜500字の日本語要約",
-  "category": "trade または contract または game または column",
+  "summary_ja": "800〜1200字の日本語要約",
+  "category": "trade_fa または draft または injury または column",
   "has_score": true または false
 }}
 
 【分類ルール】
-- trade: 移籍・トレード噂・交渉・成立報道（交渉段階も含む）
-- contract: サイン・契約延長・FA動向・契約金額の報道
-- game: 試合当日〜翌日の速報・スコアを主要情報として含む記事
-        ※インジャリーレポート・欠場情報・選手のコンディション報告は
-          スコアを主要情報としないため column に分類すること
-- column: 試合分析・選手評価・戦術考察・インタビュー・
-          インジャリーレポート・欠場情報・選手コンディション報告等
-          （スコアが引用で含まれる場合も column）
+- trade_fa : トレード・移籍・FA・契約情報（旧 trade + contract を統合）
+- draft    : ドラフト候補・指名・撤退情報
+- injury   : インジャリーレポート・欠場・復帰情報
+- column   : 試合分析・試合速報・スコア記事・選手評価・戦術・インタビュー・その他
+             ※ 試合結果・スコアが主要情報の記事も column に分類すること（game カテゴリはなし）
 
 【重要ルール】
-- category が "game" の場合、summary_ja にスコア・得点・勝敗を含めないこと
 - has_score は本文に具体的な得点数値が含まれる場合のみ true
+- has_score=true のルールはカテゴリを問わず適用する（column でも true になりうる）
 - JSON 以外の文字列を出力しないこと"""
 
 
@@ -69,7 +66,7 @@ def process_article(title: str, description: str) -> dict | None:
         result = json.loads(raw)
 
         # バリデーション
-        assert result["category"] in ("trade", "contract", "game", "column")
+        assert result["category"] in ("trade_fa", "draft", "injury", "column")
         assert isinstance(result["has_score"], bool)
         return result
 

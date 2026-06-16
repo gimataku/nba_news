@@ -38,7 +38,7 @@ def test_t05_normal_response(mocker):
         return_value=_make_mock_response({
             "title_ja": "スパーズが新ガードと契約",
             "summary_ja": "サンアントニオ・スパーズは新しいガードを獲得した。",
-            "category": "contract",
+            "category": "trade_fa",
             "has_score": False,
         }),
     )
@@ -48,18 +48,18 @@ def test_t05_normal_response(mocker):
     assert result is not None
     assert isinstance(result["title_ja"], str)
     assert isinstance(result["summary_ja"], str)
-    assert result["category"] in ("trade", "contract", "game", "column")
+    assert result["category"] in ("trade_fa", "draft", "injury", "column")
     assert isinstance(result["has_score"], bool)
-    assert result["category"] == "contract"
+    assert result["category"] == "trade_fa"
     assert result["has_score"] is False
 
 
 # ── T-06 ──────────────────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("category,should_be_none", [
-    ("trade",         False),
-    ("contract",      False),
-    ("game",          False),
+    ("trade_fa",      False),
+    ("draft",         False),
+    ("injury",        False),
     ("column",        False),
     ("invalid_value", True),
 ])
@@ -87,15 +87,16 @@ def test_t06_category_boundary(mocker, category, should_be_none):
 
 # ── T-07 ──────────────────────────────────────────────────────────────────────
 
-def test_t07_spoiler_prevention(mocker):
-    """T-07: gameカテゴリ時、summary_jaにスコアパターンが含まれないこと"""
+def test_t07_has_score_applies_to_column(mocker):
+    """T-07: フェーズ2仕様確認 - column カテゴリでも has_score=True が有効になること
+    （旧 game カテゴリ廃止・summary_ja へのスコア含有制限も廃止）"""
     mocker.patch("processor.claude_client.time.sleep")
     mocker.patch(
         "processor.claude_client.anthropic_client.messages.create",
         return_value=_make_mock_response({
-            "title_ja": "スパーズが勝利",
-            "summary_ja": "スパーズは本日の試合で素晴らしいパフォーマンスを見せた。",
-            "category": "game",
+            "title_ja": "スパーズが110-105で勝利",
+            "summary_ja": "スパーズは110-105でレイカーズを下し勝利した。",
+            "category": "column",
             "has_score": True,
         }),
     )
@@ -106,12 +107,10 @@ def test_t07_spoiler_prevention(mocker):
     )
 
     assert result is not None
-    assert result["category"] == "game"
-    assert not re.search(r"\d+-\d+", result["summary_ja"]), (
-        f"summary_ja にスコアパターンが含まれている: {result['summary_ja']}"
-    )
-    assert "勝" not in result["summary_ja"]
-    assert "敗" not in result["summary_ja"]
+    assert result["category"] == "column"
+    assert result["has_score"] is True
+    # フェーズ2: column カテゴリでも summary_ja にスコアを含められる（制限なし）
+    assert re.search(r"\d+-\d+", result["summary_ja"]) is not None
 
 
 # ── T-09 ──────────────────────────────────────────────────────────────────────

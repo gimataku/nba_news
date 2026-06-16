@@ -100,9 +100,9 @@ def run_batch() -> None:
                     "has_score":  False,
                 }
 
-        # ⑥ スコア取得（category="game" または has_score=True の記事のみ）
+        # ⑥ スコア取得（has_score=True の記事のみ。gameカテゴリ廃止によりhas_score単独判定）
         score_data = None
-        if result["category"] == "game" or result["has_score"]:
+        if result["has_score"]:
             pub_dt = _parse_pub_date(entry)
             if pub_dt:
                 score = fetch_score(pub_dt)

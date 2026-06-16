@@ -14,7 +14,7 @@ class Article(Base):
     title_original = Column(Text, nullable=False)
     title_ja       = Column(Text)  # エラー時はtitle_originalと同値・NULLにならない設計
     summary_ja     = Column(Text)  # API上限時・JSONエラー時はNULL
-    category       = Column(Text)  # trade/contract/game/column（JSONエラー時はNULL）
+    category       = Column(Text)  # trade_fa/draft/injury/column（JSONエラー時はNULL）
     is_spurs       = Column(Integer, nullable=False, default=0)  # 0 or 1
     has_score      = Column(Integer, nullable=False, default=0)  # 0 or 1
     is_duplicate   = Column(Integer, nullable=False, default=0)  # 0 or 1

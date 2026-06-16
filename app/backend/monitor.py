@@ -112,7 +112,7 @@ def check_article_stats() -> None:
     with SessionLocal() as session:
         total = session.query(Article).filter(Article.fetched_at >= cutoff).count()
 
-        categories = ["trade", "contract", "game", "column"]
+        categories = ["trade_fa", "draft", "injury", "column"]
         cat_counts = {
             cat: session.query(Article)
             .filter(Article.fetched_at >= cutoff, Article.category == cat)

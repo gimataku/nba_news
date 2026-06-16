@@ -9,7 +9,7 @@ BALLDONTLIE_API_KEY = os.getenv("BALLDONTLIE_API_KEY", "")
 
 # Claude API設定
 CLAUDE_MODEL      = "claude-haiku-4-5-20251001"
-CLAUDE_MAX_TOKENS = 1024
+CLAUDE_MAX_TOKENS = 2048  # summary_ja が800〜1200字に増加したためフェーズ2で拡張（設計書明記なし・技術的補正）
 CLAUDE_INTERVAL   = 1.0  # リクエスト間インターバル（秒）
 
 # バッチ設定
