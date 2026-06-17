@@ -10,6 +10,7 @@ from db import crud
 from fetcher.rss import fetch_rss
 from fetcher.score import fetch_score
 from processor.claude_client import process_article
+from processor.dedup import is_duplicate
 from processor.filter import is_spurs_related
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,30 @@ def run_batch() -> None:
             continue
 
         title_original = entry.get("title", "").strip()
+
+        # ③-2 重複チェック②：Levenshtein類似度チェック
+        if is_duplicate(title_original, crud):
+            pub_dt = _parse_pub_date(entry)
+            published_at = pub_dt.strftime("%Y-%m-%dT%H:%M:%S") if pub_dt else None
+            try:
+                crud.save_article_as_duplicate({
+                    "link":           link,
+                    "title_original": title_original,
+                    "title_ja":       title_original,
+                    "summary_ja":     None,
+                    "category":       None,
+                    "is_spurs":       0,
+                    "has_score":      0,
+                    "is_duplicate":   1,
+                    "score_data":     None,
+                    "source":         source_name,
+                    "published_at":   published_at,
+                    "fetched_at":     now_str,
+                })
+                logger.info("Duplicate article skipped: %s", link)
+            except Exception as exc:
+                logger.error("DB save error for duplicate %s: %s", link, exc)
+            continue
 
         # ④ Spursフィルタ
         is_spurs = is_spurs_related(entry)

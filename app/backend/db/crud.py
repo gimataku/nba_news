@@ -53,6 +53,26 @@ def get_articles(
         return [_article_to_dict(r) for r in rows]
 
 
+def get_recent_titles(days: int) -> list[str]:
+    cutoff = (
+        datetime.now(timezone.utc) - timedelta(days=days)
+    ).strftime("%Y-%m-%dT%H:%M:%S")
+    with SessionLocal() as session:
+        rows = (
+            session.query(Article.title_original)
+            .filter(Article.fetched_at >= cutoff)
+            .order_by(desc(Article.fetched_at))
+            .all()
+        )
+        return [r.title_original for r in rows]
+
+
+def save_article_as_duplicate(article: dict) -> None:
+    with SessionLocal() as session:
+        session.add(Article(**article))
+        session.commit()
+
+
 def delete_old_articles() -> int:
     cutoff = (
         datetime.now(timezone.utc) - timedelta(days=30)

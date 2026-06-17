@@ -1,0 +1,12 @@
+anthropic
+fastapi
+uvicorn[standard]
+sqlalchemy
+apscheduler
+feedparser
+python-dotenv
+requests
+pydantic
+python-Levenshtein
+python-jose[cryptography]
+passlib[bcrypt]

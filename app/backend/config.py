@@ -51,5 +51,9 @@ RSS_SOURCES = [
     },
 ]
 
+# 重複チェック設定
+DEDUP_THRESHOLD   = 0.80  # Levenshtein類似度閾値（80%以上で重複）
+DEDUP_WINDOW_DAYS = 7     # 比較対象期間（日）
+
 # フェーズ2拡張用（現在はNBAのみ）
 SPORT = "NBA"
