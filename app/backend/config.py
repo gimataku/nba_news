@@ -51,6 +51,23 @@ RSS_SOURCES = [
     },
 ]
 
+# JWT設定
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY が未設定です。openssl rand -hex 32 で生成し環境変数に設定してください。"
+    )
+JWT_ALGORITHM            = "HS256"
+ACCESS_TOKEN_EXPIRE_DAYS = 30
+
+# ユーザー設定（起動時initスクリプト用）
+INIT_USERNAME      = os.getenv("USERNAME", "")
+INIT_USER_PASSWORD = os.getenv("USER_PASSWORD", "")
+if not INIT_USERNAME or not INIT_USER_PASSWORD:
+    raise RuntimeError(
+        "USERNAME / USER_PASSWORD が未設定です。環境変数に設定してください。"
+    )
+
 # 重複チェック設定
 DEDUP_THRESHOLD   = 0.80  # Levenshtein類似度閾値（80%以上で重複）
 DEDUP_WINDOW_DAYS = 7     # 比較対象期間（日）

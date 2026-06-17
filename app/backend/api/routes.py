@@ -1,6 +1,8 @@
-from fastapi import APIRouter, BackgroundTasks, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel
 
+from auth.jwt import create_access_token
+from auth.users import authenticate_user
 from db import crud
 from scheduler import run_batch
 
@@ -10,6 +12,23 @@ router = APIRouter()
 class SettingsBody(BaseModel):
     spoiler_guard_enabled: bool | None = None
     spurs_filter_enabled: bool | None = None
+
+
+class LoginBody(BaseModel):
+    username: str
+    password: str
+
+
+@router.post("/auth/login")
+async def login(body: LoginBody):
+    """
+    ユーザー名・パスワードを検証してJWTトークンを返す。
+    GETは不可（URLにパスワードが露出しアクセスログに残るリスクのため）。
+    """
+    if not authenticate_user(body.username, body.password, crud):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token({"sub": body.username})
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @router.get("/articles")

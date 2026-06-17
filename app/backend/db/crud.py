@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import desc
 
-from .models import AppSetting, Article, FetchLog, SessionLocal
+from .models import AppSetting, Article, FetchLog, SessionLocal, User
 
 
 def get_setting(key: str) -> str:
@@ -109,6 +109,28 @@ def get_latest_fetch_log() -> dict | None:
             "fetched_count": row.fetched_count,
             "error_message": row.error_message,
         }
+
+
+# --- users ---
+
+def count_users() -> int:
+    with SessionLocal() as session:
+        return session.query(User).count()
+
+
+def create_user(username: str, hashed_password: str) -> None:
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    with SessionLocal() as session:
+        session.add(User(username=username, hashed_password=hashed_password, created_at=now))
+        session.commit()
+
+
+def get_user(username: str) -> dict | None:
+    with SessionLocal() as session:
+        row = session.query(User).filter_by(username=username).first()
+        if row is None:
+            return None
+        return {"username": row.username, "hashed_password": row.hashed_password}
 
 
 # --- helper ---

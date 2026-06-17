@@ -5,6 +5,8 @@ import uvicorn
 from fastapi import FastAPI
 
 from api.routes import router as api_router
+from auth.users import init_user
+from db import crud
 from db.models import init_db
 from scheduler import check_and_run_batch, scheduler
 
@@ -30,6 +32,8 @@ app.include_router(api_router, prefix="/api")
 def startup_event() -> None:
     init_db()
     logger.info("DB initialized")
+    init_user(crud)
+    logger.info("Initial user check completed")
     scheduler.start()
     logger.info("Scheduler started")
     check_and_run_batch()
