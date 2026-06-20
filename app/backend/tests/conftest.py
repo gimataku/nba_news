@@ -11,6 +11,9 @@ TEST_DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "te
 
 os.environ.setdefault("ANTHROPIC_API_KEY", "sk-ant-test-dummy-key")
 os.environ.setdefault("BALLDONTLIE_API_KEY", "test-dummy-key")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-purposes-only-32chars")
+os.environ.setdefault("USERNAME", "testuser")
+os.environ.setdefault("USER_PASSWORD", "testpass123")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -55,11 +58,12 @@ def reset_db(patch_db_session):
 
     with TestSessionLocal() as session:
         for key, value in [
-            ("spoiler_guard_enabled", "true"),
-            ("spurs_filter_enabled", "false"),
-            ("last_fetched_at", ""),
-            ("api_limit_exceeded", "false"),
-            ("api_reset_month", ""),
+            ("spoiler_guard_enabled",    "true"),
+            ("spurs_filter_enabled",     "false"),
+            ("last_fetched_at",          ""),
+            ("api_limit_exceeded",       "false"),
+            ("api_reset_month",          ""),
+            ("last_schedule_fetched_at", ""),
         ]:
             session.add(AppSetting(key=key, value=value))
         session.commit()
@@ -71,9 +75,10 @@ def reset_db(patch_db_session):
 def api_client(reset_db):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
-    from api.routes import router
+    from api.routes import get_current_user, router
 
     app = FastAPI()
     app.include_router(router, prefix="/api")
+    app.dependency_overrides[get_current_user] = lambda: "testuser"
     with TestClient(app) as client:
         yield client

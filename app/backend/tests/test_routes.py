@@ -40,7 +40,7 @@ def test_t12_spurs_filter_reflects_immediately(api_client, patch_db_session):
     assert resp.status_code == 200
     assert resp.json()["spurs_filter_enabled"] is True
 
-    resp = api_client.get("/api/articles", params={"spurs_only": True})
+    resp = api_client.get("/api/news", params={"spurs_only": True})
     assert resp.status_code == 200
     data = resp.json()
     assert data["total"] == 3
@@ -80,7 +80,7 @@ def test_t13_api_response_time(api_client, patch_db_session):
         session.commit()
 
     start = time.time()
-    resp = api_client.get("/api/articles")
+    resp = api_client.get("/api/news")
     elapsed = time.time() - start
 
     assert resp.status_code == 200

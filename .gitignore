@@ -6,6 +6,7 @@ __pycache__/
 *.pyc
 .venv/
 *.egg-info/
+.ipynb_checkpoints/
 
 # ログ
 logs/
