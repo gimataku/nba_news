@@ -1,23 +1,27 @@
 import { SpoilerOverlay } from './SpoilerOverlay';
 
 const BADGE_STYLES = {
-  trade:    'bg-orange-100 text-orange-700',
-  contract: 'bg-green-100 text-green-700',
-  game:     'bg-blue-100 text-blue-700',
+  trade_fa: 'bg-orange-100 text-orange-700',
+  draft:    'bg-green-100 text-green-700',
+  injury:   'bg-red-100 text-red-700',
   column:   'bg-purple-100 text-purple-700',
 };
 
 const BADGE_LABELS = {
-  trade:    'トレード',
-  contract: '契約',
-  game:     '試合結果',
+  trade_fa: 'トレード/FA',
+  draft:    'ドラフト',
+  injury:   'インジャリー',
   column:   'コラム',
 };
 
 function CategoryBadge({ category }) {
   if (!category) return null;
   return (
-    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${BADGE_STYLES[category] ?? 'bg-gray-100 text-gray-600'}`}>
+    <span
+      className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${
+        BADGE_STYLES[category] ?? 'bg-gray-100 text-gray-600'
+      }`}
+    >
       {BADGE_LABELS[category] ?? category}
     </span>
   );
@@ -48,11 +52,8 @@ function formatRelativeTime(isoStr) {
   return `${days}日前`;
 }
 
-export function NewsCard({ article, spoilerGuard, isRevealed, onReveal }) {
-  const needsSpoiler =
-    spoilerGuard &&
-    (article.category === 'game' || article.has_score) &&
-    !isRevealed;
+export function NewsCard({ article, spoilerGuard, isRevealed, onReveal, onHide }) {
+  const needsSpoiler = spoilerGuard && article.has_score && !isRevealed;
 
   return (
     <div className="border rounded-lg p-4 mb-3 bg-white shadow-sm">
@@ -63,14 +64,29 @@ export function NewsCard({ article, spoilerGuard, isRevealed, onReveal }) {
       </h2>
 
       {needsSpoiler ? (
-        <SpoilerOverlay onReveal={() => onReveal(article.id)} />
+        <SpoilerOverlay
+          onReveal={() => onReveal(article.id)}
+          onHide={() => onHide(article.id)}
+          isRevealed={isRevealed}
+          hasScore={article.has_score}
+        />
       ) : (
-        <p className="text-sm text-gray-600 mb-2">
-          {article.summary_ja || '（翻訳データなし）'}
-          {isRevealed && article.score_data && (
-            <ScoreDisplay scoreData={article.score_data} />
+        <>
+          <p className="text-sm text-gray-600 mb-2">
+            {article.summary_ja || '（翻訳データなし）'}
+            {isRevealed && article.score_data && (
+              <ScoreDisplay scoreData={article.score_data} />
+            )}
+          </p>
+          {isRevealed && article.has_score && (
+            <SpoilerOverlay
+              onReveal={() => onReveal(article.id)}
+              onHide={() => onHide(article.id)}
+              isRevealed={isRevealed}
+              hasScore={article.has_score}
+            />
           )}
-        </p>
+        </>
       )}
 
       <div className="text-xs text-gray-400">

@@ -1,8 +1,9 @@
 const TABS = [
   { value: 'all',      label: 'すべて' },
-  { value: 'trade',    label: 'トレード' },
-  { value: 'contract', label: '契約' },
-  { value: 'game',     label: '試合結果' },
+  { value: 'trade_fa', label: 'トレード/FA' },
+  { value: 'draft',    label: 'ドラフト' },
+  { value: 'schedule', label: '試合日程' },
+  { value: 'injury',   label: 'インジャリー' },
   { value: 'column',   label: 'コラム' },
 ];
 

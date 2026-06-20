@@ -1,14 +1,19 @@
-export function SpoilerOverlay({ onReveal }) {
+export function SpoilerOverlay({ onReveal, onHide, isRevealed, hasScore }) {
+  if (isRevealed) {
+    return hasScore ? (
+      <button onClick={onHide} className="text-xs text-gray-400 underline mt-1">
+        スコアを隠す
+      </button>
+    ) : null;
+  }
   return (
     <div className="relative mb-2">
-      {/* ぼかし表示のダミーテキスト */}
       <p
         className="text-sm text-gray-600 select-none"
         style={{ filter: 'blur(8px)', userSelect: 'none' }}
       >
         スコアや試合結果の情報がここに表示されます。
       </p>
-      {/* 解除ボタン */}
       <div className="absolute inset-0 flex items-center justify-center">
         <button
           onClick={onReveal}

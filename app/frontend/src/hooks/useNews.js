@@ -1,6 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
-export function useNews() {
+const TAB_LIST = ['all', 'trade_fa', 'draft', 'schedule', 'injury', 'column'];
+const API_CATEGORIES = ['all', 'trade_fa', 'draft', 'injury', 'column'];
+
+export function useNews(token, onAuthError) {
+  const onAuthErrorRef = useRef(onAuthError);
+  onAuthErrorRef.current = onAuthError;
+
   const [articles, setArticles] = useState([]);
   const [apiStatus, setApiStatus] = useState({
     api_limit_exceeded: false,
@@ -14,6 +20,8 @@ export function useNews() {
   const [loading, setLoading] = useState(false);
 
   const fetchArticles = useCallback(async () => {
+    if (selectedCategory === 'schedule') return;
+
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -21,10 +29,20 @@ export function useNews() {
         spurs_only: spursOnly,
         limit: 50,
       });
+      const headers = { Authorization: `Bearer ${token}` };
       const [articlesRes, statusRes] = await Promise.all([
-        fetch(`/api/articles?${params}`),
-        fetch('/api/status'),
+        fetch(`/api/news?${params}`, { headers }),
+        fetch('/api/status', { headers }),
       ]);
+
+      if (
+        articlesRes.status === 401 || articlesRes.status === 403 ||
+        statusRes.status === 401 || statusRes.status === 403
+      ) {
+        onAuthErrorRef.current();
+        return;
+      }
+
       const data = await articlesRes.json();
       const status = await statusRes.json();
       setArticles(data.articles);
@@ -34,30 +52,46 @@ export function useNews() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, spursOnly]);
+  }, [selectedCategory, spursOnly, token]);
 
   const toggleSpoilerGuard = async () => {
     const next = !spoilerGuard;
     setSpoilerGuard(next);
-    await fetch('/api/settings', {
+    const res = await fetch('/api/settings', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ spoiler_guard_enabled: next }),
     });
+    if (res.status === 401 || res.status === 403) onAuthErrorRef.current();
   };
 
   const toggleSpursFilter = async () => {
     const next = !spursOnly;
     setSpursOnly(next);
-    await fetch('/api/settings', {
+    const res = await fetch('/api/settings', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ spurs_filter_enabled: next }),
     });
+    if (res.status === 401 || res.status === 403) onAuthErrorRef.current();
   };
 
   const revealScore = (id) => {
     setRevealedIds((prev) => new Set([...prev, id]));
+  };
+
+  const resetSpoiler = (id) => {
+    setRevealedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -76,6 +110,7 @@ export function useNews() {
     toggleSpursFilter,
     toggleSpoilerGuard,
     revealScore,
+    resetSpoiler,
     fetchArticles,
   };
 }

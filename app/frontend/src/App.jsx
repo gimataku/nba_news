@@ -1,4 +1,7 @@
+import { useAuth } from './hooks/useAuth';
 import { useNews } from './hooks/useNews';
+import { LoginForm } from './components/LoginForm';
+import { GameSchedule } from './components/GameSchedule';
 import { CategoryTabs } from './components/CategoryTabs';
 import { FilterBar } from './components/FilterBar';
 import { NewsCard } from './components/NewsCard';
@@ -22,6 +25,16 @@ function ApiBanner({ apiStatus }) {
 }
 
 export default function App() {
+  const { token, isAuthenticated, login, logout } = useAuth();
+
+  if (!isAuthenticated) {
+    return <LoginForm onLogin={login} />;
+  }
+
+  return <MainView token={token} logout={logout} />;
+}
+
+function MainView({ token, logout }) {
   const {
     articles,
     apiStatus,
@@ -34,12 +47,21 @@ export default function App() {
     toggleSpursFilter,
     toggleSpoilerGuard,
     revealScore,
-  } = useNews();
+    resetSpoiler,
+  } = useNews(token, logout);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold text-gray-900 mb-4">NBA ニュース</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-bold text-gray-900">NBA ニュース</h1>
+          <button
+            onClick={logout}
+            className="text-sm text-gray-500 hover:text-gray-700 underline"
+          >
+            ログアウト
+          </button>
+        </div>
 
         <ApiBanner apiStatus={apiStatus} />
 
@@ -55,7 +77,9 @@ export default function App() {
           onToggleSpoiler={toggleSpoilerGuard}
         />
 
-        {loading ? (
+        {selectedCategory === 'schedule' ? (
+          <GameSchedule token={token} />
+        ) : loading ? (
           <p className="text-center text-gray-500 py-8">読み込み中...</p>
         ) : articles.length === 0 ? (
           <p className="text-center text-gray-500 py-8">記事がありません</p>
@@ -67,6 +91,7 @@ export default function App() {
               spoilerGuard={spoilerGuard}
               isRevealed={revealedIds.has(article.id)}
               onReveal={revealScore}
+              onHide={resetSpoiler}
             />
           ))
         )}
