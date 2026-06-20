@@ -40,7 +40,7 @@ def get_articles(
     offset: int = 0,
 ) -> list[dict]:
     with SessionLocal() as session:
-        q = session.query(Article)
+        q = session.query(Article).filter(Article.is_duplicate == 0)
         if category != "all":
             q = q.filter(Article.category == category)
         if spurs_only:
