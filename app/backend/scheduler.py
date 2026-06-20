@@ -1,14 +1,19 @@
 import calendar
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from config import BATCH_INTERVAL_HOURS, SCHEDULER_POLL_MIN
+from config import (
+    BATCH_INTERVAL_HOURS,
+    GAME_SCHEDULE_END_OFFSET_DAYS,
+    GAME_SCHEDULE_START_OFFSET_DAYS,
+    SCHEDULER_POLL_MIN,
+)
 from db import crud
 from fetcher.rss import fetch_rss
-from fetcher.score import fetch_score
+from fetcher.score import fetch_game_schedule, fetch_score
 from processor.claude_client import process_article
 from processor.dedup import is_duplicate
 from processor.filter import is_spurs_related
@@ -182,5 +187,68 @@ def check_and_run_batch() -> None:
         run_batch()
 
 
+def run_game_schedule_batch() -> None:
+    try:
+        today = date.today()
+        start_date = (today + timedelta(days=GAME_SCHEDULE_START_OFFSET_DAYS)).isoformat()
+        end_date = (today + timedelta(days=GAME_SCHEDULE_END_OFFSET_DAYS)).isoformat()
+
+        games = fetch_game_schedule(start_date, end_date)
+        logger.info("Game schedule fetched: %d games", len(games))
+
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        upserted = 0
+
+        for game in games:
+            status = game.get("status", "")
+            has_score = 1 if status in ("Final", "In Progress") else 0
+
+            game_date_raw = game.get("date", "")
+            game_date = game_date_raw[:10] if game_date_raw else ""
+
+            # Scheduled試合はスコア未確定のためNULL、Final/In Progressは実スコアを使用
+            if has_score:
+                home_score = game.get("home_team_score")
+                visitor_score = game.get("visitor_team_score")
+            else:
+                home_score = None
+                visitor_score = None
+
+            game_record = {
+                "game_id":      str(game["id"]),
+                "game_date":    game_date,
+                "status":       status,
+                "home_team":    game["home_team"]["abbreviation"],
+                "visitor_team": game["visitor_team"]["abbreviation"],
+                "home_score":   home_score,
+                "visitor_score": visitor_score,
+                "has_score":    has_score,
+                "fetched_at":   now_str,
+            }
+
+            try:
+                crud.upsert_game_schedule(game_record)
+                upserted += 1
+            except Exception as exc:
+                logger.error("upsert_game_schedule error for game_id=%s: %s", game.get("id"), exc)
+
+        deleted = crud.delete_old_game_schedule()
+        if deleted:
+            logger.info("Deleted %d old game_schedule records", deleted)
+
+        crud.set_setting("last_schedule_fetched_at", now_str)
+        logger.info("Game schedule batch completed: upserted=%d", upserted)
+
+    except Exception as exc:
+        logger.error("run_game_schedule_batch failed: %s", exc)
+
+
+def check_and_run_game_schedule_batch() -> None:
+    last_schedule_fetched_at = crud.get_setting("last_schedule_fetched_at")
+    if last_schedule_fetched_at == "" or _elapsed_hours(last_schedule_fetched_at) >= BATCH_INTERVAL_HOURS:
+        run_game_schedule_batch()
+
+
 scheduler = BackgroundScheduler()
 scheduler.add_job(check_and_run_batch, "interval", minutes=SCHEDULER_POLL_MIN)
+scheduler.add_job(check_and_run_game_schedule_batch, "interval", minutes=SCHEDULER_POLL_MIN)

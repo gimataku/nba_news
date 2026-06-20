@@ -84,11 +84,12 @@ engine  = create_engine(f"sqlite:///{DB_PATH}", connect_args={"check_same_thread
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 _INITIAL_SETTINGS = [
-    ("spoiler_guard_enabled", "true"),
-    ("spurs_filter_enabled",  "false"),
-    ("last_fetched_at",       ""),
-    ("api_limit_exceeded",    "false"),
-    ("api_reset_month",       ""),
+    ("spoiler_guard_enabled",      "true"),
+    ("spurs_filter_enabled",       "false"),
+    ("last_fetched_at",            ""),
+    ("api_limit_exceeded",         "false"),
+    ("api_reset_month",            ""),
+    ("last_schedule_fetched_at",   ""),
 ]
 
 

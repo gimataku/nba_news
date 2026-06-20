@@ -2,7 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import desc
 
-from .models import AppSetting, Article, FetchLog, SessionLocal, User
+from config import DATA_RETENTION_DAYS
+from .models import AppSetting, Article, FetchLog, GameSchedule, SessionLocal, User
 
 
 def get_setting(key: str) -> str:
@@ -133,6 +134,45 @@ def get_user(username: str) -> dict | None:
         return {"username": row.username, "hashed_password": row.hashed_password}
 
 
+# --- game_schedule ---
+
+def upsert_game_schedule(game: dict) -> None:
+    with SessionLocal() as session:
+        row = session.query(GameSchedule).filter_by(game_id=game["game_id"]).first()
+        if row:
+            for key, value in game.items():
+                setattr(row, key, value)
+        else:
+            session.add(GameSchedule(**game))
+        session.commit()
+
+
+def get_game_schedule(start_date: str, end_date: str) -> list[dict]:
+    with SessionLocal() as session:
+        rows = (
+            session.query(GameSchedule)
+            .filter(GameSchedule.game_date >= start_date)
+            .filter(GameSchedule.game_date <= end_date)
+            .order_by(GameSchedule.game_date)
+            .all()
+        )
+        return [_game_schedule_to_dict(r) for r in rows]
+
+
+def delete_old_game_schedule() -> int:
+    cutoff = (
+        datetime.now(timezone.utc) - timedelta(days=DATA_RETENTION_DAYS)
+    ).strftime("%Y-%m-%dT%H:%M:%S")
+    with SessionLocal() as session:
+        deleted = (
+            session.query(GameSchedule)
+            .filter(GameSchedule.fetched_at < cutoff)
+            .delete(synchronize_session=False)
+        )
+        session.commit()
+        return deleted
+
+
 # --- helper ---
 
 def _article_to_dict(row: Article) -> dict:
@@ -149,4 +189,19 @@ def _article_to_dict(row: Article) -> dict:
         "source":         row.source,
         "published_at":   row.published_at,
         "fetched_at":     row.fetched_at,
+    }
+
+
+def _game_schedule_to_dict(row: GameSchedule) -> dict:
+    return {
+        "id":           row.id,
+        "game_id":      row.game_id,
+        "game_date":    row.game_date,
+        "status":       row.status,
+        "home_team":    row.home_team,
+        "visitor_team": row.visitor_team,
+        "home_score":   row.home_score,
+        "visitor_score": row.visitor_score,
+        "has_score":    bool(row.has_score),
+        "fetched_at":   row.fetched_at,
     }

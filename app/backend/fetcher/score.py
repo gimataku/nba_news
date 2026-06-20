@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import requests
 
-from config import BALLDONTLIE_API_KEY, SPURS_TEAM_ID
+from config import BALLDONTLIE_API_KEY, BALLDONTLIE_PER_PAGE, SPURS_TEAM_ID
 
 logger = logging.getLogger(__name__)
 
@@ -53,3 +53,40 @@ def fetch_score(pub_date: datetime) -> dict | None:
     except (requests.RequestException, KeyError):
         logger.warning("BALLDONTLIE fetch error for date: %s", target_date)
         return None
+
+
+def fetch_game_schedule(start_date: str, end_date: str) -> list[dict]:
+    """
+    C-05バッチ用：BALLDONTLIE /v1/games から全チームの試合日程を取得する。
+    cursorページネーションで全ページを取得する（D-07対応）。
+    Returns: 試合データのリスト（空リストの場合もあり）
+    """
+    url = "https://api.balldontlie.io/v1/games"
+    headers = {"Authorization": f"Bearer {BALLDONTLIE_API_KEY}"}
+    all_games = []
+    cursor = None
+
+    try:
+        while True:
+            params = {
+                "start_date": start_date,
+                "end_date": end_date,
+                "per_page": BALLDONTLIE_PER_PAGE,
+            }
+            if cursor is not None:
+                params["cursor"] = cursor
+
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            body = response.json()
+            all_games.extend(body.get("data", []))
+
+            cursor = body.get("meta", {}).get("next_cursor")
+            if not cursor:
+                break
+
+        return all_games
+
+    except (requests.RequestException, KeyError) as e:
+        logger.warning("BALLDONTLIE game_schedule fetch error: %s", e)
+        return all_games  # 取得済み分は返す（途中失敗でも部分データを活用）

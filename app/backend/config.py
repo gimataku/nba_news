@@ -16,6 +16,11 @@ CLAUDE_INTERVAL   = 1.0  # リクエスト間インターバル（秒）
 BATCH_INTERVAL_HOURS = 4   # 前回取得からの最小間隔（時間）
 SCHEDULER_POLL_MIN   = 10  # APSchedulerのポーリング間隔（分）
 
+# C-05バッチ設定
+GAME_SCHEDULE_START_OFFSET_DAYS = -1   # start_date = 今日 - 1日（日本時間深夜開催の取り漏れ防止）
+GAME_SCHEDULE_END_OFFSET_DAYS   =  7   # end_date   = 今日 + 7日
+BALLDONTLIE_PER_PAGE = 100             # 1リクエストあたりの最大取得件数
+
 # データ保持
 DATA_RETENTION_DAYS = 30
 
