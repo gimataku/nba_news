@@ -7,11 +7,12 @@
 ## 主な機能
 
 - **RSS自動取得**：Hoops Rumors / Hoops Wire / The Cold Wire NBA を4時間ごとに取得（フェールオーバー対応）
-- **AI翻訳・要約**：Claude API（claude-haiku）で英語記事を日本語タイトル・300〜500字要約に変換
-- **カテゴリ分類**：`trade` / `contract` / `game` / `column` の4カテゴリに自動分類
+- **AI翻訳・要約**：Claude API（claude-haiku-4-5-20251001）で英語記事を日本語タイトル・800〜1200字要約に変換
+- **カテゴリ分類**：`trade_fa`（トレード/FA）/ `draft`（ドラフト）/ `injury`（けが人）/ `column`（コラム）の4分類に自動分類。重複記事（`is_duplicate=True`）は全タブで非表示
 - **チームフィルタ**：San Antonio Spurs 関連記事のみを絞り込み表示
-- **ネタバレ防止**：試合結果（スコア）を含む記事を折りたたみ表示
-- **スコア取得**：game カテゴリの記事に BALLDONTLIE API の試合スコアを付与
+- **ネタバレ防止**：試合スコア・勝敗を含む記事（`has_score=True`）を折りたたみ表示（全カテゴリ対象）
+- **試合日程取得**：BALLDONTLIE API から試合日程・スコアを取得し専用タブで表示
+- **JWT認証**：ログイン必須（ユーザー名・パスワード）。トークンはブラウザのメモリにのみ保持（ローカルストレージ不使用）
 - **データ自動削除**：30日経過した記事を自動削除
 
 ---
@@ -81,13 +82,18 @@ NBA_news/
 
 ```bash
 cp .env.example .env
-# .env を開き ANTHROPIC_API_KEY と BALLDONTLIE_API_KEY を記入
+# .env を開き以下の変数を記入
+# ANTHROPIC_API_KEY / BALLDONTLIE_API_KEY / SECRET_KEY（任意の長い文字列）/ USERNAME / USER_PASSWORD
 ```
 
 ### 3. バックエンド依存パッケージのインストール
 
 ```bash
-pip install fastapi uvicorn sqlalchemy apscheduler feedparser requests anthropic python-dotenv
+pip install fastapi uvicorn[standard] sqlalchemy apscheduler feedparser requests anthropic python-dotenv pydantic python-Levenshtein python-jose[cryptography] passlib[bcrypt] "bcrypt<4.0.0"
+```
+または requirements.txt を使う場合：
+```bash
+pip install -r backend/requirements.txt
 ```
 
 ### 4. フロントエンド依存パッケージのインストール
@@ -120,11 +126,11 @@ cd frontend && npm run dev
 
 | メソッド | パス | 説明 |
 |---|---|---|
-| GET | `/api/articles` | 記事一覧取得（category / spurs_only / limit / offset でフィルタ可） |
-| GET | `/api/status` | 最終取得日時・使用ソース・API制限状態 |
-| POST | `/api/fetch` | バッチ処理の手動実行 |
-| GET | `/api/settings` | 設定値取得（ネタバレ防止・Spursフィルタ） |
-| PUT | `/api/settings` | 設定値更新 |
+| POST | `/api/auth/login` | ログイン（ユーザー名・パスワード → JWTトークン発行） |
+| GET | `/api/news` | 記事一覧取得（要認証。category / spurs_only / limit / offset でフィルタ可） |
+| GET | `/api/schedule` | 試合日程一覧取得（要認証） |
+| GET | `/api/status` | 最終取得日時・使用ソース・API制限状態（要認証） |
+| GET | `/api/settings` | 設定値取得（要認証） |
 
 ---
 
@@ -136,6 +142,9 @@ cd frontend && npm run dev
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Claude API キー | https://console.anthropic.com/ |
 | `BALLDONTLIE_API_KEY` | BALLDONTLIE API キー | https://app.balldontlie.io/ |
+| `SECRET_KEY` | JWT署名用シークレット（任意の長い文字列） | 自分で生成（例：`openssl rand -hex 32`） |
+| `USERNAME` | ログインユーザー名 | 自分で設定 |
+| `USER_PASSWORD` | ログインパスワード | 自分で設定 |
 
 ---
 
