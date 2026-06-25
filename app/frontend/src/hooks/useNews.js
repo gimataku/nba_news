@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+
 const TAB_LIST = ['all', 'trade_fa', 'draft', 'schedule', 'injury', 'column'];
 const API_CATEGORIES = ['all', 'trade_fa', 'draft', 'injury', 'column'];
 
@@ -31,8 +33,8 @@ export function useNews(token, onAuthError) {
       });
       const headers = { Authorization: `Bearer ${token}` };
       const [articlesRes, statusRes] = await Promise.all([
-        fetch(`/api/news?${params}`, { headers }),
-        fetch('/api/status', { headers }),
+        fetch(`${API_BASE}/api/news?${params}`, { headers }),
+        fetch(`${API_BASE}/api/status`, { headers }),
       ]);
 
       if (
@@ -57,7 +59,7 @@ export function useNews(token, onAuthError) {
   const toggleSpoilerGuard = async () => {
     const next = !spoilerGuard;
     setSpoilerGuard(next);
-    const res = await fetch('/api/settings', {
+    const res = await fetch(`${API_BASE}/api/settings`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -71,7 +73,7 @@ export function useNews(token, onAuthError) {
   const toggleSpursFilter = async () => {
     const next = !spursOnly;
     setSpursOnly(next);
-    const res = await fetch('/api/settings', {
+    const res = await fetch(`${API_BASE}/api/settings`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

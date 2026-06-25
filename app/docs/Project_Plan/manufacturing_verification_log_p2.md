@@ -197,3 +197,87 @@ fcb215b 7-Hを完了
 | 修正後の矛盾解消確認 | ✅ 確認済み |
 
 **7-J-1 ステータス：完了**
+
+---
+
+## 7-J-2：Render公開インフラ構築
+
+| 項目 | 実施日 | 確認内容 | 結果 | 問題点 |
+|------|--------|----------|------|--------|
+| 1. main.py host/port 環境変数化 | 2026-06-26 | `HOST`/`PORT` 環境変数対応・ローカルデフォルト値維持 | **完了** | なし |
+| 2. main.py CORS ミドルウェア追加 | 2026-06-26 | `ALLOWED_ORIGINS` 環境変数・ローカルデフォルト `localhost:5173` | **完了** | なし |
+| 3. /healthz エンドポイント追加 | 2026-06-26 | 認証不要・DBアクセスなし・`{"status":"ok"}` を返す | **完了** | なし |
+| 4. backend/runtime.txt 新規作成 | 2026-06-26 | `python-3.11.9` を記載 | **完了** | なし |
+| 5. frontend/package.json engines 追加 | 2026-06-26 | `"node": ">=22.0.0"` を追加 | **完了** | なし |
+| 6. render.yaml 新規作成 | 2026-06-26 | 2サービス構成・5項目 sync:false・秘密値なし | **完了** | なし |
+| 7. setup.md Render運用手順追記 | 2026-06-26 | 手順A〜E（連携・環境変数・URL更新・Disk確認・動作確認）を追記 | **完了** | なし |
+| 8. フロントエンドAPIベースURL対応 | 2026-06-26 | `VITE_API_BASE_URL` 環境変数対応（useAuth/useNews/GameSchedule） | **完了** | なし（詳細は下記） |
+
+---
+
+### 実装内容詳細
+
+#### (A) backend/main.py 変更点
+
+| 変更箇所 | 変更内容 |
+|---------|---------|
+| import | `from fastapi.middleware.cors import CORSMiddleware` を追加 |
+| CORS設定 | `ALLOWED_ORIGINS` 環境変数からオリジンリストを生成（未設定時デフォルト: `http://localhost:5173`） |
+| CORSMiddleware | `allow_credentials=True`・`allow_methods=["*"]`・`allow_headers=["*"]` で登録 |
+| `/healthz` | 認証不要・DBアクセスなしの専用エンドポイントを追加（Renderのヘルスチェックパスに使用） |
+| uvicorn.run | `host=os.getenv("HOST", "127.0.0.1")`・`port=int(os.getenv("PORT", 8000))` に変更 |
+| ローカル開発の後方互換性 | `HOST`/`PORT`/`ALLOWED_ORIGINS` いずれも未設定時に従来通りの値をデフォルトとして使用 |
+
+#### (B) 新規ファイル
+
+| ファイル | 内容 |
+|---------|------|
+| `app/backend/runtime.txt` | `python-3.11.9` |
+| `render.yaml`（リポジトリルート） | 2サービス構成（Web Service + Static Site） |
+
+#### (C) render.yaml 構成サマリー
+
+| 項目 | バックエンド（Web Service） | フロントエンド（Static Site） |
+|-----|--------------------------|---------------------------|
+| plan | starter | — |
+| buildCommand | `pip install -r app/backend/requirements.txt` | `cd app/frontend && npm install && npm run build` |
+| startCommand | `cd app/backend && python main.py` | — |
+| healthCheckPath | `/healthz` | — |
+| disk | `mountPath: /data`・`sizeGB: 1` | — |
+| staticPublishPath | — | `app/frontend/dist` |
+| routes | — | SPA用 `/* → /index.html` rewrite |
+
+**シークレット5項目（sync: false・値なし）：**
+`ANTHROPIC_API_KEY`・`BALLDONTLIE_API_KEY`・`SECRET_KEY`・`USERNAME`・`USER_PASSWORD`
+
+**通常値：**
+`DATABASE_URL=/data/nba_news.db`・`ALLOWED_ORIGINS`（プレースホルダー）・`VITE_API_BASE_URL`（プレースホルダー）
+
+#### (D) フロントエンドAPIベースURL管理
+
+**発見した状況：** 全API呼び出しが相対パス（`/api/...`）を使用。ローカル開発ではViteプロキシが機能するが、Render Static Site（別オリジン）では動作しない。
+
+**対応：** `VITE_API_BASE_URL` 環境変数を以下3ファイルに追加：
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `useAuth.js` | `const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''` 追加・`/api/auth/login` を更新 |
+| `useNews.js` | 同上・`/api/news`・`/api/status`・`/api/settings`（2箇所）を更新 |
+| `GameSchedule.jsx` | 同上・`/api/schedule` を更新 |
+
+**ローカル開発への影響：** `VITE_API_BASE_URL` 未設定時は `''`（空文字）がデフォルトのため、相対パスのままViteプロキシが動作する。挙動変更なし。
+
+---
+
+### セルフチェック
+
+| チェック項目 | 結果 |
+|-------------|------|
+| main.py host/port/CORSが環境変数化・ローカルデフォルト維持 | ✅ |
+| /healthz が認証なしで `{"status":"ok"}` を返す（コード確認済み） | ✅ |
+| render.yaml に秘密値なし・5項目が sync:false（grep確認済み） | ✅ |
+| runtime.txt・package.json engines 追加 | ✅ |
+| setup.md に Render 運用手順追記（手順A〜E） | ✅ |
+| フロントエンドAPIベースURL管理の報告と対応 | ✅ |
+
+**7-J-2 ステータス：完了**

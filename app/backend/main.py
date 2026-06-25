@@ -3,6 +3,7 @@ import os
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import router as api_router
 from auth.users import init_user
@@ -25,7 +26,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="NBA News JP")
+
+# CORS設定（ローカル開発時は localhost:5173、本番はALLOWED_ORIGINS環境変数で指定）
+_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+_origins = [o.strip() for o in _origins_env.split(",")]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(api_router, prefix="/api")
+
+
+@app.get("/healthz")
+def healthz():
+    """認証不要のヘルスチェック（Renderのヘルスチェックパスに使用）"""
+    return {"status": "ok"}
 
 
 @app.on_event("startup")
@@ -46,4 +65,9 @@ def shutdown_event() -> None:
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run(
+        "main:app",
+        host=os.getenv("HOST", "127.0.0.1"),
+        port=int(os.getenv("PORT", 8000)),
+        reload=False,
+    )

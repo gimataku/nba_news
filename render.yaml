@@ -1,0 +1,47 @@
+services:
+  # ---------- バックエンド Web Service ----------
+  - type: web
+    name: nba-news-backend
+    env: python
+    plan: starter
+    buildCommand: pip install -r app/backend/requirements.txt
+    startCommand: cd app/backend && python main.py
+    healthCheckPath: /healthz
+    disk:
+      name: nba-news-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      # シークレット（Renderダッシュボードで手動入力。このファイルには値を書かない）
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: BALLDONTLIE_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: USERNAME
+        sync: false
+      - key: USER_PASSWORD
+        sync: false
+      # 通常値
+      - key: DATABASE_URL
+        value: /data/nba_news.db
+      # デプロイ後にフロントエンドの実際のURLに変更すること
+      # 例: https://nba-news-frontend.onrender.com
+      - key: ALLOWED_ORIGINS
+        value: https://YOUR_FRONTEND_URL.onrender.com
+
+  # ---------- フロントエンド Static Site ----------
+  - type: static
+    name: nba-news-frontend
+    buildCommand: cd app/frontend && npm install && npm run build
+    staticPublishPath: app/frontend/dist
+    envVars:
+      # デプロイ後にバックエンドの実際のURLに変更すること
+      # 例: https://nba-news-backend.onrender.com
+      - key: VITE_API_BASE_URL
+        value: https://YOUR_BACKEND_URL.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

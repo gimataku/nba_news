@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+
 export function GameSchedule({ token }) {
   const [games, setGames] = useState([]);
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
-    fetch(`/api/schedule?start_date=${today}&end_date=${nextWeek}`, {
+    fetch(`${API_BASE}/api/schedule?start_date=${today}&end_date=${nextWeek}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())

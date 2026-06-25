@@ -137,3 +137,74 @@ Vite は空きポートを自動的に探して起動します（例: 5174, 5175
   - **Windows**: `del app\backend\nba_news.db`
   - **Mac / Linux**: `rm app/backend/nba_news.db`
   - その後 `python main.py` で再起動
+
+---
+
+## Render 本番運用手順
+
+> **前提**: ローカル開発が正常に動作していること（手順1〜5 が完了していること）。
+
+### Render 構成概要
+
+本アプリはリポジトリルート（`NBA_news/`）の `render.yaml` で2サービス構成を定義している：
+
+| サービス | 種別 | 役割 |
+|---|---|---|
+| `nba-news-backend` | Web Service（Starter $7/月） | Python/FastAPI バックエンド + Persistent Disk（1GB $0.25/月） |
+| `nba-news-frontend` | Static Site（無料） | React フロントエンド |
+
+### 手順 A：GitHubリポジトリとRenderの連携
+
+1. [Render ダッシュボード](https://dashboard.render.com/) にログインする
+2. 「New +」→「Blueprint」を選択し、このリポジトリを連携する
+3. Render が `render.yaml` を自動検出し、2サービスの構成を表示する
+4. 確認後「Apply」でサービスを作成する
+
+### 手順 B：シークレット環境変数の手動入力
+
+`render.yaml` にはセキュリティ上 `sync: false` として値を記載していない。以下5項目を Render ダッシュボードの **`nba-news-backend` サービス → Environment → Environment Variables** で手動入力すること：
+
+| 変数名 | 値の取得方法 |
+|---|---|
+| `ANTHROPIC_API_KEY` | [Anthropic Console](https://console.anthropic.com/) |
+| `BALLDONTLIE_API_KEY` | [balldontlie.io](https://www.balldontlie.io/) |
+| `SECRET_KEY` | `openssl rand -hex 32` で生成 |
+| `USERNAME` | 任意のログインユーザー名 |
+| `USER_PASSWORD` | 任意のログインパスワード |
+
+> **重要**: 5項目のいずれかが未設定または空文字の場合、バックエンドは起動時に `RuntimeError` を発生させ起動しません。
+
+### 手順 C：URL プレースホルダーの更新
+
+初回デプロイ後、Render が各サービスのURLを払い出す（例: `https://nba-news-backend.onrender.com`）。以下の2箇所を実際のURLに更新すること：
+
+1. **バックエンドの `ALLOWED_ORIGINS` 環境変数**  
+   `nba-news-backend` → Environment → `ALLOWED_ORIGINS` の値を フロントエンドの実際のURL に変更  
+   例: `https://nba-news-frontend.onrender.com`
+
+2. **フロントエンドの `VITE_API_BASE_URL` 環境変数**  
+   `nba-news-frontend` → Environment → `VITE_API_BASE_URL` の値を バックエンドの実際のURL に変更  
+   例: `https://nba-news-backend.onrender.com`  
+   変更後は **Manual Deploy** でフロントエンドを再ビルドすること（ビルド時環境変数のため）。
+
+### 手順 D：Persistent Disk の確認
+
+`nba-news-backend` → Disks で以下の設定が適用されているか確認する：
+
+- **Name**: `nba-news-data`
+- **Mount Path**: `/data`
+- **Size**: 1 GB
+
+SQLite DB は `/data/nba_news.db` に保存され、デプロイ後もデータが保持される。
+
+### 手順 E：デプロイ後の動作確認
+
+1. **ヘルスチェック確認**  
+   バックエンドURL + `/healthz` にアクセスし `{"status":"ok"}` が返ることを確認する  
+   例: `https://nba-news-backend.onrender.com/healthz`
+
+2. **ログイン確認**  
+   フロントエンドURL（例: `https://nba-news-frontend.onrender.com`）を開き、手順Bで設定した `USERNAME` / `USER_PASSWORD` でログインできることを確認する
+
+3. **記事取得確認**  
+   ログイン後、ニュース一覧画面が表示されること（初回バッチ実行まで記事は0件の場合あり）を確認する
