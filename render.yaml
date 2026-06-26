@@ -32,7 +32,8 @@ services:
         value: https://YOUR_FRONTEND_URL.onrender.com
 
   # ---------- フロントエンド Static Site ----------
-  - type: static
+  - type: web
+    env: static
     name: nba-news-frontend
     buildCommand: cd app/frontend && npm install && npm run build
     staticPublishPath: app/frontend/dist
