@@ -24,6 +24,8 @@ services:
       - key: USER_PASSWORD
         sync: false
       # 通常値
+      - key: HOST
+        value: 0.0.0.0
       - key: DATABASE_URL
         value: /data/nba_news.db
       # デプロイ後にフロントエンドの実際のURLに変更すること
