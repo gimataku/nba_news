@@ -1,0 +1,7 @@
+[run]
+omit =
+    config.py
+    main.py
+    db/migrate_p2.py
+    monitor.py
+    tests/*

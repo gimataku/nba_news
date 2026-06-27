@@ -3,6 +3,13 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from dotenv import load_dotenv
+
+load_dotenv(
+    os.path.join(os.path.dirname(__file__), "..", "..", ".env"),
+    override=True,
+)
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -80,5 +87,18 @@ def api_client(reset_db):
     app = FastAPI()
     app.include_router(router, prefix="/api")
     app.dependency_overrides[get_current_user] = lambda: "testuser"
+    with TestClient(app) as client:
+        yield client
+
+
+@pytest.fixture
+def raw_api_client(reset_db):
+    """JWT認証オーバーライドなしのテストクライアント（認証テスト用）"""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from api.routes import router
+
+    app = FastAPI()
+    app.include_router(router, prefix="/api")
     with TestClient(app) as client:
         yield client
